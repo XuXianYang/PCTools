@@ -11,11 +11,15 @@
 #import "PCLifeLocationController.h"
 //火车票查询
 #import "PCTicketQueryController.h"
-
+//吉凶查看
 #import "PCQueryRecreationController.h"
+//今日禁忌
 #import "PCTodayTabooController.h"
+//壁纸
 #import "PCWallpaperController.h"
+//文字识别
 #import "PCIdentifyTextController.h"
+//房贷计算器
 #import "PCHouseViewController.h"
 //存款计算
 #import "EUTDepositCalculatorController.h"
