@@ -1,0 +1,16 @@
+PODS:
+  - MangoFix (1.4.0)
+
+DEPENDENCIES:
+  - MangoFix
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - MangoFix
+
+SPEC CHECKSUMS:
+  MangoFix: 3ffa5f7ee6eaf3e48d79df0abc5975bf7171c728
+
+PODFILE CHECKSUM: c1ae6a2866484e2ad13df5b1693b334a5bc89ff0
+
+COCOAPODS: 1.6.1

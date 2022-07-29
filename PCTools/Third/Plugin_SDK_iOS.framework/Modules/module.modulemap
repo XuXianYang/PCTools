@@ -1,0 +1,6 @@
+framework module Plugin_SDK_iOS {
+  umbrella header "Plugin_SDK_iOS.h"
+
+  export *
+  module * { export * }
+}
