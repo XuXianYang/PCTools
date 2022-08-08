@@ -30,8 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 +(NSString*)getCurrentBatteryLevel;
 //获取总内存
 +(NSString*)getTotalMemory;
-//获取可用内存
-+(NSString*)getNoUsedMemory;
+//获取已用内存
++(NSString*)getUsedMemory;
 //获取剩余存储空间
 + (NSString *)freeDiskSpaceInBytes;
 //获取总存储空间
@@ -73,6 +73,8 @@ NS_ASSUME_NONNULL_BEGIN
 +(NSDictionary *)fetchSSIDInfo;
 //网速测试
 +(NSMutableDictionary *)getDataCounters;
+
++ (NSString *)getNetworkIPAddress;
 
 @end
 

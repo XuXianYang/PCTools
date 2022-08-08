@@ -176,66 +176,35 @@
 }
 #pragma mark - 获取剩余电量
 +(NSString*)getCurrentBatteryLevel{
-    UIApplication *app = [UIApplication sharedApplication];
-    if (app.applicationState == UIApplicationStateActive||app.applicationState==UIApplicationStateInactive) {
-        Ivar ivar=  class_getInstanceVariable([app class],"_statusBar");
-        id status  = object_getIvar(app, ivar);
-        for (id aview in [status subviews]) {
-            int batteryLevel = 0;
-            for (id bview in [aview subviews]) {
-                if ([NSStringFromClass([bview class]) caseInsensitiveCompare:@"UIStatusBarBatteryItemView"] == NSOrderedSame&&[[[UIDevice currentDevice] systemVersion] floatValue] >=6.0)
-                {
-                    
-                    Ivar ivar=  class_getInstanceVariable([bview class],"_capacity");
-                    if(ivar)
-                    {
-                        //batteryLevel = ((int (*)(id, Ivar))object_getIvar)(bview, ivar);
-                        //这种方式也可以
-                        ptrdiff_t offset = ivar_getOffset(ivar);
-                         unsigned char *stuffBytes = (unsigned char *)(__bridge void *)bview;
-                         batteryLevel = * ((int *)(stuffBytes + offset));
-                        NSLog(@"电池电量:%d",batteryLevel);
-                        if (batteryLevel > 0 && batteryLevel <= 100) {
-                            return [NSString stringWithFormat:@"%i%@",batteryLevel,@"%"];
-                            
-                        } else {
-                            return @"0";
-                        }
-                    }
-                    
-                }
-            }
-        }
-    }
-    return @"0";
+    
+    [UIDevice currentDevice].batteryMonitoringEnabled = YES;
+    double deviceLevel = [UIDevice currentDevice].batteryLevel;
+    return [NSString stringWithFormat:@"%d%%",(int)(deviceLevel*100)];
 }
-//获取总内存
-+(NSString*)getTotalMemory{
-    size_t size = sizeof(int);
-    int results;
-    int mib[2] = {CTL_HW, HW_PHYSMEM};
-    sysctl(mib, 2, &results, &size, NULL, 0);
-    
-    NSString *totalSpaceString = [NSString stringWithFormat:@"%0.1fG",results/1024.0/1024.0/1024.0];
-    return totalSpaceString;
+//获取总运行内存
++ (NSString*)getTotalMemory {
+    int64_t totalMemory = [[NSProcessInfo processInfo] physicalMemory];
+    if (totalMemory < -1) totalMemory = -1;
+    return [NSString stringWithFormat:@"%lldG",totalMemory/1024/1024/1024];
 }
-//获取可用内存
-+(NSString*)getNoUsedMemory{
-    vm_statistics_data_t vmStats;
-    mach_msg_type_number_t infoCount = HOST_VM_INFO_COUNT;
-    kern_return_t kernReturn = host_statistics(mach_host_self(),
-                                               HOST_VM_INFO,
-                                               (host_info_t)&vmStats,
-                                               &infoCount);
+// 已使用的运行内存空间
++ (NSString*)getUsedMemory {
+    mach_port_t host_port = mach_host_self();
+    mach_msg_type_number_t host_size = sizeof(vm_statistics_data_t) / sizeof(integer_t);
+    vm_size_t page_size;
+    vm_statistics_data_t vm_stat;
+    kern_return_t kern;
     
-    if (kernReturn != KERN_SUCCESS) {
-        return @"0G";
-    }
+    kern = host_page_size(host_port, &page_size);
+    if (kern != KERN_SUCCESS) return @"-1";
+    kern = host_statistics(host_port, HOST_VM_INFO, (host_info_t)&vm_stat, &host_size);
+    if (kern != KERN_SUCCESS) return @"-1";
     
-    NSString *totalSpaceString = [NSString stringWithFormat:@"%0.1fG",(vm_page_size * vmStats.free_count)/1024.0/1024.0/1024.0];
-    
-    return totalSpaceString;
+    int64_t sizeS = page_size * (vm_stat.active_count + vm_stat.inactive_count + vm_stat.wire_count);
+            
+    return [NSString stringWithFormat:@"%lldG",sizeS/1024/1024/1024];
 }
+
 //获取剩余存储空间
 + (NSString *)freeDiskSpaceInBytes{
     struct statfs buf;
@@ -244,7 +213,34 @@
         freeSpace = (unsigned long long)(buf.f_bsize * buf.f_bavail);
     }
     NSString *str = [NSString stringWithFormat:@"%0.2lld G",freeSpace/1024/1024/1024];
+    
     return str;
+}
++(void)usedSpaceAndfreeSpace{
+    NSString* path = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) objectAtIndex:0] ;
+    NSFileManager* fileManager = [[NSFileManager alloc ]init];
+    NSDictionary *fileSysAttributes = [fileManager attributesOfFileSystemForPath:path error:nil];
+    NSNumber *freeSpace = [fileSysAttributes objectForKey:NSFileSystemFreeSize];
+    NSNumber *totalSpace = [fileSysAttributes objectForKey:NSFileSystemSize];
+    NSString *stttttt = [NSString stringWithFormat:@"已占用%0.1fG/剩余%0.1fG",([totalSpace longLongValue] - [freeSpace longLongValue])/1024.0/1024.0/1024.0,[freeSpace longLongValue]/1024.0/1024.0/1024.0];
+    
+    NSLog(@"stttttt = %@",stttttt);
+}
+
+- (float)getTotalDiskSpace{
+    float totalsize = 0.0;
+    NSError *error = nil;
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSDictionary *dictionary = [[NSFileManager defaultManager] attributesOfFileSystemForPath:[paths lastObject] error: &error];
+    if (dictionary)
+    {
+       NSNumber *_total = [dictionary objectForKey:NSFileSystemSize];
+       totalsize = [_total unsignedLongLongValue]*1.0;
+    } else
+    {
+       NSLog(@"Error Obtaining System Memory Info: Domain = %@, Code = %ld", [error domain], (long)[error code]);
+    }
+    return totalsize;
 }
 //获取总存储空间
 + (NSString *)totalDiskSpaceInBytes{
@@ -329,7 +325,7 @@
     //    NSString *mConnectType = [[NSString alloc] initWithFormat:@"%@",info.currentRadioAccessTechnology];
     
     if (mCarrier == nil || [mCarrier isEqualToString:@"(null)"]) {
-        mCarrier = @"";
+        mCarrier = @"无";
     }
     return mCarrier;
 }
@@ -374,7 +370,26 @@
     }
     return mCarrier;
 }
-
++ (NSString *)getNetworkIPAddress {
+    NSError *error;
+    NSURL *ipURL = [NSURL URLWithString:@"http://pv.sohu.com/cityjson?ie=utf-8"];
+    NSMutableString *ip = [NSMutableString stringWithContentsOfURL:ipURL encoding:NSUTF8StringEncoding error:&error];
+    //判断返回字符串是否为所需数据
+    if ([ip hasPrefix:@"var returnCitySN = "]) {
+        //对字符串进行处理，然后进行json解析
+        //删除字符串多余字符串
+        NSRange range = NSMakeRange(0, 19);
+        [ip deleteCharactersInRange:range];
+        NSString * nowIp =[ip substringToIndex:ip.length-1];
+        //将字符串转换成二进制进行Json解析
+        NSData * data = [nowIp dataUsingEncoding:NSUTF8StringEncoding];
+        NSDictionary * dict = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:nil];
+        
+        //PCRequestIPStr = dict[@"cip"] ? dict[@"cip"] : @"";
+        return dict[@"cip"] ? dict[@"cip"] : @"";
+    }
+    return @"";
+}
 //获取ip地址---- 仅限wifi环境下
 + (NSString *)deviceIPAdress {
     NSString *address = @"an error occurred when obtaining ip address";
