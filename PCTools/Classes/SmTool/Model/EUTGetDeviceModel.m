@@ -452,7 +452,7 @@
         NSTextCheckingResult *firstMatch=[regex firstMatchInString:ipAddress options:0 range:NSMakeRange(0, [ipAddress length])];
         
         if (firstMatch) {
-            NSRange resultRange = [firstMatch rangeAtIndex:0];
+            //NSRange resultRange = [firstMatch rangeAtIndex:0];
             //NSString *result=[ipAddress substringWithRange:resultRange];
             //输出结果
             //            NSLog(@"%@",result);

@@ -878,8 +878,8 @@
 			isa = PBXGroup;
 			children = (
 				1C20ED61289260FA00107D74 /* city.json */,
-				1C20ED1A289260E900107D74 /* EUTGetDeviceModel.m */,
 				1C20ED1B289260E900107D74 /* EUTGetDeviceModel.h */,
+				1C20ED1A289260E900107D74 /* EUTGetDeviceModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";

@@ -114,14 +114,19 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
     CLLocation *newLocation = locations[0];
     self.location = newLocation;
-    [self getMyLocation];
+    //[self getMyLocation];
     //    CLLocationCoordinate2D coordinate=newLocation.coordinate;
     //    NSLog(@"您的当前位置:经度：%f,纬度：%f,海拔：%f,航向：%f,速度：%f",coordinate.longitude,coordinate.latitude,newLocation.altitude,newLocation.course,newLocation.speed);
     // 获取当前所在的城市名
     CLGeocoder *geocoder = [[CLGeocoder alloc] init];
     //根据经纬度反向地理编译出地址信息
     [geocoder reverseGeocodeLocation:newLocation completionHandler:^(NSArray *array, NSError *error){
+        [PNCGifWaitView hideWaitViewInController:self];
+        
         if (array.count > 0){
+            
+            NSLog(@"位置信息： %@",array);
+            
             CLPlacemark *placemark = [array objectAtIndex:0];
             //获取城市
             NSString *city = placemark.locality;

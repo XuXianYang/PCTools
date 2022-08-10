@@ -55,15 +55,22 @@
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray<CLLocation *> *)locations {
     CLLocation *newLocation = locations[0];
     self.location = newLocation;
-    [self getMyLocation];
-    //    CLLocationCoordinate2D coordinate=newLocation.coordinate;
+    //[self getMyLocation];
+     CLLocationCoordinate2D coordinate=newLocation.coordinate;
     //    NSLog(@"您的当前位置:经度：%f,纬度：%f,海拔：%f,航向：%f,速度：%f",coordinate.longitude,coordinate.latitude,newLocation.altitude,newLocation.course,newLocation.speed);
     // 获取当前所在的城市名
     CLGeocoder *geocoder = [[CLGeocoder alloc] init];
     //根据经纬度反向地理编译出地址信息
     [geocoder reverseGeocodeLocation:newLocation completionHandler:^(NSArray *array, NSError *error){
+        [PNCGifWaitView hideWaitViewInController:self];
+        
+        NSLog(@"array - %@",array);
+        
         if (array.count > 0){
             CLPlacemark *placemark = [array objectAtIndex:0];
+            
+            NSLog(@"placemark = %@",placemark.addressDictionary);
+            
             //获取城市
             NSString *city = placemark.locality;
             if (!city) {
@@ -71,6 +78,22 @@
                 city = placemark.administrativeArea;
             }
             self.city = city;
+            
+            NSDictionary *dict = placemark.addressDictionary;
+            [self.dataList removeAllObjects];
+            [self.dataList addObjectsFromArray:@[
+             @{@"title":@"国家",@"content":[CommonTool safeString:dict[@"Country"]]},
+             @{@"title":@"省份",@"content":[CommonTool safeString:city]},
+             @{@"title":@"城市",@"content":[CommonTool safeString:dict[@"City"]]},
+             @{@"title":@"区县",@"content":[CommonTool safeString:dict[@"SubLocality"]]},
+             @{@"title":@"街道",@"content":[CommonTool safeString:dict[@"Street"]]},
+             @{@"title":@"街道门牌号",@"content":[CommonTool safeString:dict[@"Name"]]},
+             @{@"title":@"行政区划代码",@"content":[CommonTool safeString:dict[@"CountryCode"]]},
+             @{@"title":@"当前经纬度",@"content":[CommonTool safeString:[NSString stringWithFormat:@"%f,%f",self.location.coordinate.longitude,self.location.coordinate.latitude]]},
+             @{@"title":@"当前海拔",@"content":[CommonTool safeString:[NSString stringWithFormat:@"%f",self.location.altitude]]},]];
+            [self.tableView reloadData];
+            
+            
         }else if (error == nil && [array count] == 0){//No results were returned.
             
         }else if (error != nil){//error
